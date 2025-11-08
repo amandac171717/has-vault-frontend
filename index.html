@@ -1507,8 +1507,8 @@
             
             // Try common patterns
             if (hostname.includes('render.com')) {
-                // Render.com pattern: frontend-name.onrender.com -> backend-name.onrender.com
-                return `${protocol}//hsa-vault-backend.onrender.com/api`;
+                // Render.com pattern: use the actual backend URL
+                return `https://hsa-vault-backend.onrender.com/api`;
             }
             
             if (hostname.includes('railway.app')) {
