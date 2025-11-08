@@ -1273,20 +1273,6 @@
                         </div>
                     </div>
 
-                    <!-- Monthly Chart -->
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3>Monthly HSA Expenses</h3>
-                            <div class="chart-controls">
-                                <button class="chart-btn active" onclick="updateChart('bar')">Bar</button>
-                                <button class="chart-btn" onclick="updateChart('line')">Line</button>
-                                <button class="chart-btn" onclick="updateChart('area')">Area</button>
-                            </div>
-                        </div>
-                        <canvas id="expenseChart"></canvas>
-                    </div>
-
-
                     <!-- Tax Calculator -->
                     <div class="tax-calculator">
                         <h3>Tax Savings Calculator</h3>
@@ -1476,8 +1462,6 @@
         let receipts = [];
         let currentUser = null;
         let currentYear = new Date().getFullYear();
-        let chartType = 'bar';
-        let expenseChart = null;
 
         // API Configuration
         // Auto-detect API URL based on current hostname
@@ -1561,7 +1545,6 @@
                     updateUserUI();
                     await loadReceipts();
                     updateDashboard();
-                    drawExpenseChart();
                     calculateTaxSavings();
                 } else {
                     localStorage.removeItem('authToken');
@@ -1643,7 +1626,6 @@
                     closeAuthModal();
                     await loadReceipts();
                     updateDashboard();
-                    drawExpenseChart();
                 } else {
                     showError(data.error || 'Login failed');
                 }
@@ -1885,7 +1867,6 @@
                     // Reload receipts and update dashboard
                     await loadReceipts();
                     updateDashboard();
-                    drawExpenseChart();
                 } else if (response.ok && data.ocr) {
                     // OCR processed but receipt not saved - pre-fill form
                     if (data.ocr.suggested) {
@@ -2107,8 +2088,6 @@
                 document.getElementById('ytdExpenses').textContent = `$${ytdExpenses.toFixed(2)}`;
                 document.getElementById('monthlyAvg').textContent = `$${monthlyAverage.toFixed(2)}`;
             }
-            
-            drawExpenseChart();
         }
 
         function calculateYTDExpenses(year) {
@@ -2132,14 +2111,6 @@
         }
 
 
-        function updateChart(type) {
-            chartType = type;
-            document.querySelectorAll('.chart-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            drawExpenseChart();
-        }
 
         function calculateTaxSavings() {
             const hsaContribution = parseFloat(document.getElementById('hsaContribution').value) || 0;
@@ -2390,74 +2361,6 @@
             }
         }
 
-        function drawExpenseChart() {
-            const ctx = document.getElementById('expenseChart');
-            if (!ctx) return;
-            
-            const monthlyData = getMonthlyExpenses(currentYear);
-            
-            if (expenseChart) {
-                expenseChart.destroy();
-            }
-            
-            expenseChart = new Chart(ctx, {
-                type: chartType === 'area' ? 'line' : chartType,
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: 'HSA Expenses',
-                        data: monthlyData,
-                        backgroundColor: 'rgba(26, 77, 62, 0.1)',
-                        borderColor: 'rgba(26, 77, 62, 1)',
-                        borderWidth: 2,
-                        fill: chartType === 'area' || chartType === 'line',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function getMonthlyExpenses(year) {
-            const monthlyData = new Array(12).fill(0);
-            
-            receipts
-                .filter(r => new Date(r.date).getFullYear() === year)
-                .forEach(r => {
-                    const month = new Date(r.date).getMonth();
-                    monthlyData[month] += r.amount;
-                });
-            
-            return monthlyData;
-        }
-
-        // Load Chart.js
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = function() {
-            setTimeout(() => {
-                drawExpenseChart();
-            }, 100);
-        };
-        document.head.appendChild(script);
         
         // Note: OCR is now handled by the backend, so Tesseract.js is not needed in the frontend
         
